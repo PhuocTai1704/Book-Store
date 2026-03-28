@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20250614-01
+      author: dangphuoctai
+      runOnChange: true
+      changes:
+        - sql:
+            splitStatements: true
+            stripComments: true
+            sql: |
+              SET @exists := (
+                SELECT COUNT(*) FROM information_schema.statistics
+                WHERE table_schema = 'railway'
+                  AND table_name = 'products'
+                  AND index_name = 'idx_fulltext_search'
+              );
+              SET @stmt := IF(@exists = 0,
+                'ALTER TABLE products ADD FULLTEXT INDEX idx_fulltext_search (search_text)',
+                'SELECT "Index already exists"');
+              PREPARE stmt FROM @stmt;
+              EXECUTE stmt;
+              DEALLOCATE PREPARE stmt;
